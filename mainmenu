@@ -1,0 +1,47 @@
+from msvcrt import getwch
+from os import system, name
+clear_console = lambda: system('cls' if name == 'nt' else 'clear')
+
+class MainMenu:
+    def __init__(self):
+        self._jobs =["1: View Inventory", "2: Add Item", "3: Remove Item", "4: Exit"]
+
+    def navigation(self):
+            key = getwch()
+            key = getwch()  # Get the actual key code
+            if key == 'H':
+                return 'up'
+            elif key == 'P':
+                return 'down'
+            elif key == '\r':
+                return None
+            
+    def __str__(self):
+        menu_str = "Main Menu:\n"
+
+        menu_str += '\n'.join(self._jobs)
+        return menu_str
+            
+    def select_option(self):
+        index = 0
+        while True:
+            clear_console()
+            self._jobs[index] = f"> {self._jobs[index]} <"
+            print(self)
+            self._jobs[index] = self._jobs[index].strip("> <")
+            action = self.navigation()
+            if action == 'up' and index > 0:
+                index -= 1
+            elif action == 'down' and index < len(self._jobs) - 1:
+                index += 1
+            
+            if action is None:
+                return self._jobs[index]
+
+class AdminMenu:
+    pass
+
+if __name__ == "__main__":
+    menu = MainMenu()
+    selected_option = menu.select_option()
+    print(f"You selected: {selected_option}")

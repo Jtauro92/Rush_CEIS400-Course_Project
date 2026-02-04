@@ -1,0 +1,47 @@
+from employee import Employee
+from data_io import DataIO
+
+class UserSignOn:
+    def __init__(self):
+        self.emp = Employee()
+        self.admin_account = DataIO().is_admin
+
+    def _set_name(self):
+        self.emp.name = input("Enter your name: ")
+
+    def _set_id(self):
+        self.emp.id = input("Enter your ID: ")
+
+    def _confirm_pswd(self):
+
+        self.emp.pswd = input("Enter your password: ")
+  
+
+    def _confirm_id(self):
+
+        self._set_id()
+        self._set_name()
+                
+    
+    def sign_on(self) -> bool:
+        while True:
+            try:
+                self._confirm_id()
+            except ValueError as ve:
+                print(ve)
+                continue
+            if self.admin_account(self.emp.id):
+                try:
+                    self._confirm_pswd()
+                    return 'admin'
+                except ValueError as ve:
+                    print(ve)
+                    continue
+            break
+
+    
+
+if __name__ == "__main__":
+    user_signon = UserSignOn()
+    if user_signon.sign_on() == 'admin':
+        print("Admin access granted.")
