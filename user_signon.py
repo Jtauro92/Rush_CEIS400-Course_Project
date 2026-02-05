@@ -1,5 +1,6 @@
 from typing import Optional
-from employee import Employee, DataIO
+from employee import Employee
+from data_io import DataIO
 
 class UserSignOn:
     def __init__(self):
