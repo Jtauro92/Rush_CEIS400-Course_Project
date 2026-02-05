@@ -1,11 +1,11 @@
 from data_io import DataIO
 
 class Employee:
-    def __init__(self, name = '', id = 0):
+    def __init__(self, name: str = '', id: int = 0):
         self._name = name
         self._id = id
         self._pswd = ''
-        self._admin = False
+
         self.employee_exists = DataIO().employee_exists
         self.get_password = DataIO().get_password
 
@@ -39,7 +39,7 @@ class Employee:
     def pswd(self, value: str):
         if len(value) < 6:
             raise ValueError("Password must be at least 6 characters long.")
-        if value != self.get_password(self.id):
+        if value != self.get_password(self._id):
             raise ValueError("Incorrect password.")
         self._pswd = True
 

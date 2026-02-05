@@ -1,29 +1,21 @@
-from employee import Employee
-from data_io import DataIO
+from typing import Optional
+from employee import Employee, DataIO
 
 class UserSignOn:
     def __init__(self):
         self.emp = Employee()
         self.admin_account = DataIO().is_admin
 
-    def _set_name(self):
-        self.emp.name = input("Enter your name: ")
 
-    def _set_id(self):
-        self.emp.id = input("Enter your ID: ")
-
-    def _confirm_pswd(self):
-
-        self.emp.pswd = input("Enter your password: ")
-  
 
     def _confirm_id(self):
 
-        self._set_id()
-        self._set_name()
+        self.emp.id = input("Enter your ID: ")
+        self.emp.name = input("Enter your name: ")
+
                 
     
-    def sign_on(self) -> bool:
+    def sign_on(self) -> Optional[bool]:
         while True:
             try:
                 self._confirm_id()
@@ -32,8 +24,8 @@ class UserSignOn:
                 continue
             if self.admin_account(self.emp.id):
                 try:
-                    self._confirm_pswd()
-                    return 'admin'
+                    self.emp.pswd = input("Enter your password: ")
+                    return True
                 except ValueError as ve:
                     print(ve)
                     continue
@@ -43,5 +35,6 @@ class UserSignOn:
 
 if __name__ == "__main__":
     user_signon = UserSignOn()
-    if user_signon.sign_on() == 'admin':
+    user_signon.sign_on()
+    if user_signon.admin_account(user_signon.emp.id):
         print("Admin access granted.")

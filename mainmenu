@@ -1,42 +1,59 @@
 from msvcrt import getwch
 from os import system, name
+from user_signon import UserSignOn as uso
 clear_console = lambda: system('cls' if name == 'nt' else 'clear')
 
 class MainMenu:
     def __init__(self):
-        self._jobs =["1: View Inventory", "2: Add Item", "3: Remove Item", "4: Exit"]
+        self.admin_account = uso().sign_on()
+        self._jobs = ["1. View Inventory",
+                     "2. Check-in Item",
+                     "3. Check-out Item",
+                     "0. Exit"
+        ]
+        
+        if self.admin_account:
+            self._jobs.insert(3, "4. Add Employee")
+            self._jobs.insert(4, "5. Terminate Employee")
 
-    def navigation(self):
-            key = getwch()
-            key = getwch()  # Get the actual key code
-            if key == 'H':
-                return 'up'
-            elif key == 'P':
-                return 'down'
-            elif key == '\r':
-                return None
-            
+
     def __str__(self):
-        menu_str = "Main Menu:\n"
-
+        clear_console()
+        if self.admin_account:
+            menu_str = "Admin Menu:\n"
+        else:
+            menu_str = "Main Menu:\n"
+        
         menu_str += '\n'.join(self._jobs)
         return menu_str
             
     def select_option(self):
+        def navigation():
+                key = getwch()  # Get the actual key code
+                if key == 'H':
+                    return 'up'
+                elif key == 'P':
+                    return 'down'
+                elif key == '\r':
+                    return '\r'        
         index = 0
         while True:
-            clear_console()
+            
             self._jobs[index] = f"> {self._jobs[index]} <"
             print(self)
             self._jobs[index] = self._jobs[index].strip("> <")
-            action = self.navigation()
+            action = navigation()
+
             if action == 'up' and index > 0:
                 index -= 1
             elif action == 'down' and index < len(self._jobs) - 1:
                 index += 1
-            
-            if action is None:
+            if action == '\r':
                 return self._jobs[index]
+
+    def process_selection(self):
+        self.select_option()            
+            
 
 class AdminMenu:
     pass
