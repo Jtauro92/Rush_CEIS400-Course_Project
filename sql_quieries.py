@@ -15,3 +15,20 @@ IS_ADMIN = """
 GET_PASSWORD = """
                 SELECT password FROM employees WHERE id = ? AND admin = ?
                 ;"""
+
+CREATE_EQUIPMENT_TABLE = """
+                CREATE TABLE IF NOT EXISTS equipment (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                quantity INTEGER NOT NULL);"""
+
+CREATE_CHECKOUT_TABLE = """
+                CREATE TABLE IF NOT EXISTS checkouts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_id TEXT NOT NULL,
+                equipment_id TEXT NOT NULL,
+                checkout_date DATE DEFAULT CURRENT_DATE,
+                return_date DATE DEFAULT NULL,
+                FOREIGN KEY (employee_id) REFERENCES employees(id),
+                FOREIGN KEY (equipment_id) REFERENCES equipment(id)
+                );""" 
