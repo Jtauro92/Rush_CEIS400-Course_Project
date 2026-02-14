@@ -29,6 +29,8 @@ CREATE_CHECKOUT_TABLE = """
                 equipment_id TEXT NOT NULL,
                 checkout_date DATE DEFAULT CURRENT_DATE,
                 return_date DATE DEFAULT NULL,
+                check_in_date DATE DEFAULT NULL,
+                quantity INTEGER DEFAULT 1,
                 FOREIGN KEY (employee_id) REFERENCES employees(id),
                 FOREIGN KEY (equipment_id) REFERENCES equipment(id)
                 );""" 

@@ -1,8 +1,8 @@
 from sqlite3 import Connection, Error
 from sql_quieries import CREATE_TABLE, CREATE_CHECKOUT_TABLE, CREATE_EQUIPMENT_TABLE, ADD_EMPLOYEE, IS_ADMIN
 from typing import Optional
-from datetime import date
-
+import csv
+import random
 
 DATABASE = 'inventory.db'
 
@@ -14,44 +14,85 @@ class DataIO(Connection):
         except Error as e:
             print(f"Error connecting to database: {e}")
 
-        self.return_date = str(date.today().replace(day=date.today().day + 7)) #7 days from checkout date format: YYYY-MM-DD
+        self.cursor().execute("PRAGMA foreign_keys = ON;")
+
         self._create_table()
     
     def _create_table(self):
-        self.cursor().execute(CREATE_TABLE)
-        self.cursor().execute(CREATE_EQUIPMENT_TABLE)
-        self.cursor().execute(CREATE_CHECKOUT_TABLE)
+        with self:
+            self.cursor().execute(CREATE_TABLE)
+            self.cursor().execute(CREATE_EQUIPMENT_TABLE)
+            self.populate_equipment()
+            self.cursor().execute(CREATE_CHECKOUT_TABLE)
+
+    def populate_equipment(self):
+        with open("products.csv", newline="") as csvfile:
+            reader = csv.DictReader(csvfile)
+            try:
+                for row in reader:
+                    query = "INSERT INTO equipment (id, name, quantity) VALUES (?, ?, ?);"
+                    self.cursor().execute(query, (row["Index"], row["Name"], random.randint(1, 100)))
+            except Error:
+                    pass
 
     def employee_exists(self, identifier: str) -> bool:
         query = "SELECT 1 FROM employees WHERE id = ? OR name = ? LIMIT 1;"
-        result = self.cursor().execute(query, (identifier, identifier))
-        result = result.fetchone()
+        with self:
+            result = self.cursor().execute(query, (identifier, identifier))
+            result = result.fetchone()
         return result is not None
 
     def item_exists(self, identifier: str) -> bool:
         query = "SELECT 1 FROM equipment WHERE id = ? OR name = ? LIMIT 1;"
-        result = self.cursor().execute(query, (identifier, identifier))
-        result = result.fetchone()
+        with self:
+            result = self.cursor().execute(query, (identifier, identifier))
+            result = result.fetchone()
         return result is not None
     
-    def return_item(self, identifier: str, employee_id: str):
-        if not self.item_exists(identifier):
-            raise ValueError(f"Item with ID or name '{identifier}' does not exist.")
-        query = "UPDATE equipment SET quantity = quantity + 1 WHERE id = ? OR name = ?;"
-        self.cursor().execute(query, (identifier, identifier))
-        query = f"""UPDATE checkouts
-                    SET return_date = CURRENT_DATE
-                    WHERE employee_id = {employee_id}
-                    AND equipment_id = ?
-                    AND return_date IS NULL;"""
-        self.cursor().execute(query, (identifier,))
-        if not self.item_exists(identifier):
-            raise ValueError(f"Item with ID or name '{identifier}' does not exist.")
-        query = "UPDATE equipment SET quantity = quantity - 1 WHERE id = ? OR name = ?;"
-        self.cursor().execute(query, (identifier, identifier))
-        query = """INSERT INTO checkouts (employee_id, equipment_id, checkout_date, return_date) 
-                   VALUES (?, (SELECT id FROM equipment WHERE id = ? OR name = ?), CURRENT_TIMESTAMP, ?);"""
-        self.cursor().execute(query, (employee_id, identifier, identifier, self.return_date))
+    def get_item(self, identifier: str) -> tuple[str, str, int] | None:
+        query = "SELECT id, name, quantity FROM equipment WHERE id = ? OR name = ? LIMIT 1;"
+        with self:
+            result = self.cursor().execute(query, (identifier, identifier))
+            result = result.fetchone()
+        return result if result is not None else None
+    
+    def return_item(self, item_id: str, employee_id: str):
+        if not self.employee_exists(employee_id):
+            raise ValueError(f"Employee with ID or name '{employee_id}' does not exist.")
+        update_quantity = f"""UPDATE equipment 
+                            SET quantity = quantity + 1 
+                            WHERE id = {item_id};"""
+        
+        update_checkout = f"""UPDATE checkouts 
+                            SET check_in_date = CURRENT_DATE, return_date = NULL, quantity = quantity - 1
+                            WHERE employee_id = {employee_id} AND 
+                                    equipment_id = {item_id} AND return_date IS NOT NULL;"""
+        try:
+            cur = self.cursor()
+            cur.execute(update_checkout)
+            if cur.rowcount == 0:
+                raise ValueError("No matching checkout record found for this employee and item.")
+            self.cursor().execute(update_quantity)
+            
+        except Error as e:
+            raise ValueError(f"Error returning item: {e}")
+
+    def checkout_item(self, item_id: str, employee_id: str):
+        update_quantity = f"""UPDATE equipment 
+                            SET quantity = quantity - 1 
+                            WHERE id = {item_id} AND quantity > 0;"""
+        
+        insert_record = f"""INSERT INTO checkouts (employee_id, equipment_id, checkout_date, return_date) 
+                            VALUES ({employee_id}, {item_id}, CURRENT_DATE, date('now', '+7 days'));"""
+        cur = self.cursor()
+        cur.execute(update_quantity)
+        if cur.rowcount == 0:
+            raise ValueError("Item is out of stock.")
+        cur.execute(insert_record)
+        if cur.rowcount == 0:
+            update_record = f"""UPDATE checkouts 
+                            SET checkout_date = CURRENT_DATE, return_date = date('now', '+7 days')
+                            WHERE employee_id = {employee_id} AND equipment_id = {item_id} AND return_date IS NOT NULL;"""
     
     def add_employee(self, name: str, id: str):
         with self:
@@ -79,4 +120,4 @@ class DataIO(Connection):
 
 if __name__ == "__main__":
     with DataIO() as d:
-        print(d.employee_exists("Jason Rush"))
+        print(d.populate_equipment())

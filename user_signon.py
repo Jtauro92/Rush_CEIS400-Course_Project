@@ -5,20 +5,33 @@ from data_io import DataIO
 class UserSignOn:
     def __init__(self):
         self.emp = Employee()
-        self.admin_account = DataIO().is_admin
-        self.id_exist = DataIO().employee_exists
-        self.name_exist = DataIO().employee_exists
+        self.dio = DataIO()
+        self.admin_account = self.dio.is_admin
+        self.id_exist = self.dio.employee_exists
+        self.name_exist = self.dio.employee_exists
 
 
 
     def _confirm_id(self):
         while True:
-            self.emp.id = input("Enter your ID: ")
-            if self.id_exist(self.emp.id):
-                print(False)
-            self.emp.name = input("Enter your name: ")
+            try:
+                self.emp.id = input("Enter your ID: ")
+            except ValueError as e:
+                print(e)
+                continue
+            if not self.id_exist(self.emp.id):
+                print("Employee ID does not exist. Please try again.")
+                continue
+            break
+        while True:
+            try:
+                self.emp.name = input("Enter your name: ")
+            except ValueError as e:
+                print(e)
+                continue
             if not self.name_exist(self.emp.name):
-                raise ValueError("Invalid name entered.")
+                print("Employee name does not exist. Please try again.")
+                continue
             return self.emp
 
                 

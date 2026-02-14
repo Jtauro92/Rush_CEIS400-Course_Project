@@ -17,8 +17,11 @@ class Employee:
     
     @name.setter
     def name(self, value: str):
-        if not value.isnumeric():
-            self._name = value.title()
+        if value.isnumeric():
+            raise ValueError("Employee name cannot be numeric.")
+        if value.strip() == '':
+            raise ValueError("Employee name cannot be empty.")  
+        self._name = value.title()
         
     @property
     def id(self):
@@ -26,6 +29,10 @@ class Employee:
     
     @id.setter
     def id(self, value: str):
+        if not value.isnumeric():
+            raise ValueError("Employee ID must be numeric.")
+        if len(value) != 5:
+            raise ValueError("Employee ID must be exactly 5 digits long.")
         self._id = value
 
     @property
@@ -41,23 +48,39 @@ class Employee:
         self._pswd = True
 
     def add_employee_record(self):
-        self.id = input("Enter Employee ID: ")
-        if self.emp_exists(self._id):
-            raise ValueError(f"Employee with ID {self._id} already exists.")
-        self.name = input("Enter Employee Name: ")
+        while True:
+            try:
+                self.id = input("Enter Employee ID: ")
+            except ValueError as e:                
+                print(e)
+                continue        
+            if self.emp_exists(self._id):
+                print("Employee ID already exists. Please try again.")
+                continue
+            break
+        while True:
+            try:
+                self.name = input("Enter Employee Name: ")
+            except ValueError as e:
+                print(e)
+                continue
+            break
         self.add_record(self.name, self.id)
+
 
 
     def delete_employee_record(self):
         while True:
-            self.id = input("Enter Employee ID to Terminate: ")
             try:
-                self.delete_record(self.id)
+                self.id = input("Enter Employee ID to delete: ")
             except ValueError as e:
                 print(e)
                 continue
-            print(f"Employee with ID {self.id} has been terminated.")
+            if not self.emp_exists(self._id):
+                print("Employee ID does not exist. Please try again.")
+                continue
             break
+        self.delete_record(self._id)
 
     def __str__(self):
         return f"Employee(Name: {self._name}, ID: {self._id})"
