@@ -74,4 +74,4 @@ class Equipment:
     
 if __name__ == "__main__":
     equipment = Equipment()
-    equipment.return_item('12345')
+    equipment.checkout('12345')

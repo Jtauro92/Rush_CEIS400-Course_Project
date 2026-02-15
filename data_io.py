@@ -57,43 +57,50 @@ class DataIO(Connection):
         return result if result is not None else None
     
     def return_item(self, item_id: str, employee_id: str):
-        if not self.employee_exists(employee_id):
-            raise ValueError(f"Employee with ID or name '{employee_id}' does not exist.")
         update_quantity = f"""UPDATE equipment 
                             SET quantity = quantity + 1 
-                            WHERE id = {item_id};"""
+                            WHERE id = '{item_id}';"""
         
-        update_checkout = f"""UPDATE checkouts 
-                            SET check_in_date = CURRENT_DATE, return_date = NULL, quantity = quantity - 1
-                            WHERE employee_id = {employee_id} AND 
-                                    equipment_id = {item_id} AND return_date IS NOT NULL;"""
-        try:
-            cur = self.cursor()
-            cur.execute(update_checkout)
-            if cur.rowcount == 0:
-                raise ValueError("No matching checkout record found for this employee and item.")
+        update_record = f"""UPDATE checkouts 
+                            SET quantity = quantity - 1, check_in_date = CURRENT_DATE
+                            WHERE employee_id = '{employee_id}' AND equipment_id = '{item_id}' 
+                            AND return_date IS NOT NULL;"""
+        
+        with self:
             self.cursor().execute(update_quantity)
-            
-        except Error as e:
-            raise ValueError(f"Error returning item: {e}")
+            self.cursor().execute(update_record)
 
     def checkout_item(self, item_id: str, employee_id: str):
         update_quantity = f"""UPDATE equipment 
                             SET quantity = quantity - 1 
-                            WHERE id = {item_id} AND quantity > 0;"""
+                            WHERE id = '{item_id}' AND quantity > 0;"""
         
-        insert_record = f"""INSERT INTO checkouts (employee_id, equipment_id, checkout_date, return_date) 
-                            VALUES ({employee_id}, {item_id}, CURRENT_DATE, date('now', '+7 days'));"""
+        # Check for open checkout from TODAY
+        checkout_record = f"""SELECT 1 FROM checkouts
+                            WHERE employee_id = '{employee_id}' AND equipment_id = '{item_id}' 
+                            AND date(checkout_date) = CURRENT_DATE;"""
+        
+        update_record = f"""UPDATE checkouts 
+                            SET quantity = quantity + 1
+                            WHERE employee_id = '{employee_id}' AND equipment_id = '{item_id}'
+                            AND date(checkout_date) = CURRENT_DATE;"""
+        
+        insert_record = f"""INSERT INTO checkouts (employee_id, equipment_id, checkout_date, return_date, quantity)
+                            VALUES ('{employee_id}', '{item_id}', CURRENT_DATE, date('now', '+7 days'), 1)
+                            ;"""
+        
         cur = self.cursor()
         cur.execute(update_quantity)
         if cur.rowcount == 0:
             raise ValueError("Item is out of stock.")
-        cur.execute(insert_record)
-        if cur.rowcount == 0:
-            update_record = f"""UPDATE checkouts 
-                            SET checkout_date = CURRENT_DATE, return_date = date('now', '+7 days')
-                            WHERE employee_id = {employee_id} AND equipment_id = {item_id} AND return_date IS NOT NULL;"""
-    
+        
+        cur.execute(checkout_record)
+        if cur.fetchone() is not None:
+            cur.execute(update_record)  # Update today's checkout
+        else:
+            cur.execute(insert_record)   # Insert new (not today's)
+
+                
     def add_employee(self, name: str, id: str):
         with self:
             self._create_table()
