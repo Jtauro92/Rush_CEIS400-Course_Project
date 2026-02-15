@@ -26,11 +26,11 @@ CREATE_CHECKOUT_TABLE = """
                 CREATE TABLE IF NOT EXISTS checkouts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 employee_id TEXT NOT NULL,
-                equipment_id TEXT NOT NULL,
+                equipment_id TEXT NOT NULL UNIQUE,
                 checkout_date DATE DEFAULT CURRENT_DATE,
                 return_date DATE DEFAULT NULL,
                 check_in_date DATE DEFAULT NULL,
-                quantity INTEGER DEFAULT 1,
+                quantity INTEGER DEFAULT 0,
                 FOREIGN KEY (employee_id) REFERENCES employees(id),
                 FOREIGN KEY (equipment_id) REFERENCES equipment(id)
                 );""" 
