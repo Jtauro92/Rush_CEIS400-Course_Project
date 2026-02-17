@@ -56,6 +56,13 @@ class DataIO(Connection):
             result = result.fetchone()
         return result if result is not None else None
     
+    def get_all_items(self) -> list[tuple[str, str, int]]:
+        query = """SELECT id, name, quantity FROM equipment;"""
+        with self:
+            result = self.cursor().execute(query)
+            return result.fetchall()
+            
+    
     def return_item(self, item_id: str, employee_id: str):
         update_quantity = f"""UPDATE equipment 
                             SET quantity = quantity + 1 
@@ -88,17 +95,17 @@ class DataIO(Connection):
         insert_record = f"""INSERT INTO checkouts (employee_id, equipment_id, checkout_date, return_date, quantity)
                             VALUES ('{employee_id}', '{item_id}', CURRENT_DATE, date('now', '+7 days'), 1)
                             ;"""
-        
-        cur = self.cursor()
-        cur.execute(update_quantity)
-        if cur.rowcount == 0:
-            raise ValueError("Item is out of stock.")
-        
-        cur.execute(checkout_record)
-        if cur.fetchone() is not None:
-            cur.execute(update_record)  # Update today's checkout
-        else:
-            cur.execute(insert_record)   # Insert new (not today's)
+        with self:
+            cur = self.cursor()
+            cur.execute(update_quantity)
+            if cur.rowcount == 0:
+                raise ValueError("Item is out of stock.")
+            
+            cur.execute(checkout_record)
+            if cur.fetchone() is not None:
+                cur.execute(update_record)  # Update today's checkout
+            else:
+                cur.execute(insert_record)   # Insert new (not today's)
 
                 
     def add_employee(self, name: str, id: str):
@@ -123,6 +130,15 @@ class DataIO(Connection):
         result = self.cursor().execute(query, (id,))
         result = result.fetchone()
         return result[0] if result is not None else None
+    
+    def checked_out_items(self, employee_id: str) -> list[tuple[str, str]] | None:
+        query = """SELECT e.name, c.quantity
+                FROM checkouts AS c
+                JOIN equipment AS e ON e.id = c.equipment_id
+                WHERE c.employee_id = ? AND c.check_in_date IS NULL;"""
+        result = self.cursor().execute(query, (employee_id,))
+        result = result.fetchall()
+        return result if len(result) > 0 else None
 
 
 if __name__ == "__main__":

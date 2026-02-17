@@ -13,9 +13,9 @@ class MainMenu:
     def __init__(self):
         self.account_type = 'user' 
         
-        self._job_map : dict[str, Callable[..., None]] = {"1. View Inventory": exit,
-                     "2. Return Item": eq().return_item,
-                     "3. Check-out Item": eq().checkout,
+        self._job_map : dict[str, Callable[..., None]] = {"1. View Inventory": eq().view_inventory,
+                                                        "2. Return Item": eq().return_item,
+                                                        "3. Check-out Item": eq().checkout,
         }
     
     def sign_in(self):
@@ -74,12 +74,14 @@ class MainMenu:
         emp = self.sign_in()
         clear_console()
         print(f"Welcome, {emp.name}!")
-        sleep(1)
+        eq().notify_checkout(emp.id)
+        sleep(2)
         while True:
             selection = self.select_option()
             clear_console()
             if selection == 0:
                 print("Viewing Inventory...")
+                self._job_map["1. View Inventory"]()
 
             elif selection == 1:
                 print("Checking-in Item...")

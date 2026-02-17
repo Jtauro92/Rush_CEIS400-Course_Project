@@ -66,6 +66,7 @@ class Employee:
                 continue
             break
         self.add_record(self.name, self.id)
+        print(f"Employee '{self.name}' with ID {self.id} added successfully.")
 
 
 
@@ -81,6 +82,7 @@ class Employee:
                 continue
             break
         self.delete_record(self._id)
+        print(f"Employee with ID {self.id} deleted successfully.")
 
     def __str__(self):
         return f"Employee(Name: {self._name}, ID: {self._id})"

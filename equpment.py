@@ -1,4 +1,7 @@
 from data_io import DataIO as dio
+from time import sleep
+from sys import stdout
+from msvcrt import kbhit
 
 class Equipment:
     def __init__(self):
@@ -39,6 +42,17 @@ class Equipment:
             self._quantity = self._item[2]
         else:
             raise ValueError("Item does not exist.")
+    
+    def notify_checkout(self, emp_id: str):
+        items = dio().checked_out_items(emp_id)
+        items_checked_out: list[str] = []
+        if items:
+            print(f"You have the following items(s) checked out")
+            print(f"{'Name':<55} | {'Qty':>3}") 
+            for item in items:
+                items_checked_out.append(f"{item[0]:<55} |{item[1]:>3}")
+            
+            print("\n".join(items_checked_out))
         
         
     
@@ -53,6 +67,7 @@ class Equipment:
 
             try:
                 dio().checkout_item(self._id, employee_id)
+                print(f"Item '{self._name}' (ID: {self._id}) checked out successfully.")
             except ValueError as e:
                 print(e)
             break
@@ -65,13 +80,44 @@ class Equipment:
             except ValueError as e:
                 print(e)
                 continue
-
-            try:
-                dio().return_item(self._id, employee_id)
-            except ValueError as e:
-                print(e)
+            choice = input(f"Confirm return of '{self._name}' (ID: {self._id})? (y/n): ").strip().lower()
+            if choice == 'y':
+                try:
+                    dio().return_item(self._id, employee_id)
+                    print(f"Item '{self._name}' (ID: {self._id}) returned successfully.")
+                except ValueError as e:
+                    print(e)
             break
-    
+
+    def view_inventory(self):
+        print("Press any key to stop scrolling through the inventory...")
+        items = dio().get_all_items()
+        display_list: list[str] = []
+        print("ID: | Name                                                    | Qty")
+        while True:
+            
+            for item in items:
+
+                item = (f"{item[0]:>3} | {item[1]:<55} | {item[2]:>3}")
+            
+                display_list.append(item)
+                if kbhit():  
+                        return
+                if len(display_list) < 30:
+                    continue
+        
+                if len(display_list) == 30:
+                    print(f"\n".join(display_list))
+                else:
+                    display_list.pop(0)
+                    stdout.write(f"\033[30A")  # Move cursor up by specified lines
+                    stdout.flush()
+                    print("\n".join(display_list))
+                    
+                sleep(0.5)
+
+
+        
 if __name__ == "__main__":
     equipment = Equipment()
-    equipment.checkout('12345')
+    equipment.view_inventory()
