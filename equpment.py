@@ -44,7 +44,7 @@ class Equipment:
             raise ValueError("Item does not exist.")
     
     def notify_checkout(self, emp_id: str):
-        items = dio().checked_out_items(emp_id)
+        items = dio().checked_out_items(emp_id) if dio().checked_out_items(emp_id) else None
         items_checked_out: list[str] = []
         if items:
             print(f"You have the following items(s) checked out")
@@ -87,6 +87,8 @@ class Equipment:
                     print(f"Item '{self._name}' (ID: {self._id}) returned successfully.")
                 except ValueError as e:
                     print(e)
+            else:
+                print("Return cancelled.")
             break
 
     def view_inventory(self):

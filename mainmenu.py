@@ -71,6 +71,8 @@ class MainMenu:
                 return index
 
     def process_selection(self):
+        e().add_admin_employee_record()
+        sleep(2)
         emp = self.sign_in()
         clear_console()
         print(f"Welcome, {emp.name}!")
@@ -86,15 +88,23 @@ class MainMenu:
             elif selection == 1:
                 print("Checking-in Item...")
                 self._job_map["2. Return Item"](emp.id)
+                sleep(2)
+
             elif selection == 2:
                 print("Checking-out Item...")
                 self._job_map["3. Check-out Item"](emp.id)
+                sleep(2)
+
             elif selection == 3 and self.account_type == 'admin':
                 print("Adding Employee...")
                 self._job_map["4. Add Employee"]()
+                sleep(2)
+
             elif selection == 4 and self.account_type == 'admin':
                 print("Terminating Employee...")
                 self._job_map["5. Terminate Employee"]()
+                sleep(2)
+
             elif (selection == 5 and self.account_type == 'admin') or (selection == 3 ):
                 print("Exiting...")
                 self._job_map["0. Exit"]()

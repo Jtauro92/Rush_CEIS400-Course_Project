@@ -41,6 +41,13 @@ class DataIO(Connection):
             result = self.cursor().execute(query, (identifier, identifier))
             result = result.fetchone()
         return result is not None
+    
+    def admin_employee_exists(self) -> bool:
+        query = "SELECT 1 FROM employees WHERE admin = 'yes' LIMIT 1;"
+        with self:
+            result = self.cursor().execute(query)
+            result = result.fetchone()
+        return result is not None
 
     def item_exists(self, identifier: str) -> bool:
         query = "SELECT 1 FROM equipment WHERE id = ? OR name = ? LIMIT 1;"
@@ -112,6 +119,13 @@ class DataIO(Connection):
         with self:
             self._create_table()
             self.cursor().execute(ADD_EMPLOYEE, (id, name))
+
+    def add_admin_employee(self, name: str, id: str, password: str):
+        with self:
+            self._create_table()
+            query = """INSERT INTO employees (id, name, admin, password) 
+            VALUES (?, ?, 'yes', ?);"""
+            self.cursor().execute(query, (id, name, password))
         
     def delete_employee(self, id: str):
         with self:
@@ -122,8 +136,9 @@ class DataIO(Connection):
 
     def is_admin(self, id: str | int) -> bool:
         result = self.cursor().execute(IS_ADMIN, (id,))
-        result = result.fetchone()
-        return result is not None and result[0] == 'yes'
+        with self:
+            result = result.fetchone()
+            return result is not None and result[0] == 'yes'
     
     def get_password(self, id: str | int) -> Optional[str]:
         query = "SELECT password FROM employees WHERE id = ? AND admin = 'yes';"

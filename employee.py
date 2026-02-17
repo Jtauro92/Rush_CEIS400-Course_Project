@@ -5,11 +5,13 @@ class Employee:
         self._name = name
         self._id = id
         self._pswd = ''
+        self._dio = DataIO()
 
-        self.emp_exists = DataIO().employee_exists
-        self.get_password = DataIO().get_password
-        self.add_record = DataIO().add_employee
-        self.delete_record = DataIO().delete_employee
+        self.emp_exists = self._dio.employee_exists
+        self.get_password = self._dio.get_password
+        self.add_record = self._dio.add_employee
+        self.delete_record = self._dio.delete_employee
+        self.admin_employee_exists = self._dio.admin_employee_exists
 
     @property
     def name(self):
@@ -68,7 +70,39 @@ class Employee:
         self.add_record(self.name, self.id)
         print(f"Employee '{self.name}' with ID {self.id} added successfully.")
 
-
+    def add_admin_employee_record(self):
+        if not self.admin_employee_exists():
+            print("No admin employee found. Please create an admin employee record.")
+            while True:
+                try:
+                    self.id = input("Enter Admin Employee ID: ")
+                except ValueError as e:                
+                    print(e)
+                    continue        
+                if self.emp_exists(self._id):
+                    print("Employee ID already exists. Please try again.")
+                    continue
+                break
+            while True:
+                try:
+                    self.name = input("Enter Admin Employee Name: ")
+                except ValueError as e:
+                    print(e)
+                    continue
+                break
+            while True:
+                password = input("Enter Admin Password: ")
+                try:
+                    self.pswd = password
+                except ValueError as e:
+                    if str(e) == "Incorrect password.":
+                        pass
+                    else:
+                        print(e)
+                        continue
+                break
+            self._dio.add_admin_employee(self.name, self.id, password)
+            print(f"""Admin Employee '{self.name}' with ID {self.id} added successfully.""")
 
     def delete_employee_record(self):
         while True:
