@@ -86,10 +86,9 @@ class DataIO(Connection):
                     );"""
         
         with self:
-            cur = self.cursor()
-            cur.execute(update_quantity)
-            cur.execute(update_record)
-            return cur.rowcount > 0  # Return True if a record was updated, False otherwise
+            self.cursor().execute(update_quantity)
+            result = self.cursor().execute(update_record)
+            return result.rowcount > 0  # Return True if a record was updated, False otherwise
         
 
     def checkout_item(self, item_id: str, employee_id: str):
@@ -111,16 +110,15 @@ class DataIO(Connection):
                             VALUES ('{employee_id}', '{item_id}', CURRENT_DATE, date('now', '+7 days'), 1)
                             ;"""
         with self:
-            cur = self.cursor()
-            cur.execute(update_quantity)
-            if cur.rowcount == 0:
+            result =self.cursor().execute(update_quantity)
+            if result.rowcount == 0:
                 raise ValueError("Item is out of stock.")
             
-            cur.execute(checkout_record)
-            if cur.fetchone() is not None:
-                cur.execute(update_record)  # Update today's checkout
+            result = self.cursor().execute(checkout_record)
+            if result.fetchone() is not None:
+                self.cursor().execute(update_record)  # Update today's checkout
             else:
-                cur.execute(insert_record)   # Insert new (not today's)
+                self.cursor().execute(insert_record)   # Insert new (not today's)
 
                 
     def add_employee(self, name: str, id: str):
