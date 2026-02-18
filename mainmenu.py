@@ -21,6 +21,7 @@ class MainMenu:
     def sign_in(self):
         while True:
             clear_console()
+            print("Please sign in to continue...")
             account = uso().sign_on()
 
             if account[0] == 'admin':

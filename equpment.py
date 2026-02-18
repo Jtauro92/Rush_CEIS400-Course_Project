@@ -64,13 +64,14 @@ class Equipment:
             except ValueError as e:
                 print(e)
                 continue
-
-            try:
-                dio().checkout_item(self._id, employee_id)
-                print(f"Item '{self._name}' (ID: {self._id}) checked out successfully.")
-            except ValueError as e:
-                print(e)
-            break
+            choice = input(f"Confirm checkout of '{self._name}' (ID: {self._id})? (y/n): ").strip().lower()
+            if choice == 'y':
+                try:
+                    dio().checkout_item(self._id, employee_id)
+                    print(f"Item '{self._name}' (ID: {self._id}) checked out successfully.")
+                except ValueError as e:
+                    print(e)
+                break
 
     def return_item(self, employee_id: str):
         while True:
@@ -83,8 +84,11 @@ class Equipment:
             choice = input(f"Confirm return of '{self._name}' (ID: {self._id})? (y/n): ").strip().lower()
             if choice == 'y':
                 try:
-                    dio().return_item(self._id, employee_id)
-                    print(f"Item '{self._name}' (ID: {self._id}) returned successfully.")
+                    updated = dio().return_item(self._id, employee_id)
+                    if updated:
+                        print(f"Item '{self._name}' (ID: {self._id}) returned successfully.")
+                    else:
+                        print(f"Failed to return item '{self._name}' (ID: {self._id}).")
                 except ValueError as e:
                     print(e)
             else:

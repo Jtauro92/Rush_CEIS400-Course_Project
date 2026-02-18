@@ -76,13 +76,21 @@ class DataIO(Connection):
                             WHERE id = '{item_id}';"""
         
         update_record = f"""UPDATE checkouts 
-                            SET quantity = quantity - 1, check_in_date = CURRENT_DATE
-                            WHERE employee_id = '{employee_id}' AND equipment_id = '{item_id}' 
-                            AND return_date IS NOT NULL;"""
+                        SET quantity = quantity - 1, check_in_date = CURRENT_DATE
+                        WHERE rowid = (
+                        SELECT rowid FROM checkouts
+                        WHERE employee_id = '{employee_id}' AND equipment_id = '{item_id}' 
+                        AND return_date IS NOT NULL
+                        ORDER BY checkout_date ASC
+                        LIMIT 1
+                    );"""
         
         with self:
-            self.cursor().execute(update_quantity)
-            self.cursor().execute(update_record)
+            cur = self.cursor()
+            cur.execute(update_quantity)
+            cur.execute(update_record)
+            return cur.rowcount > 0  # Return True if a record was updated, False otherwise
+        
 
     def checkout_item(self, item_id: str, employee_id: str):
         update_quantity = f"""UPDATE equipment 
@@ -150,7 +158,7 @@ class DataIO(Connection):
         query = """SELECT e.name, c.quantity
                 FROM checkouts AS c
                 JOIN equipment AS e ON e.id = c.equipment_id
-                WHERE c.employee_id = ? AND c.check_in_date IS NULL;"""
+                WHERE c.employee_id = ? AND c.quantity > 0;"""
         result = self.cursor().execute(query, (employee_id,))
         result = result.fetchall()
         return result if len(result) > 0 else None
